@@ -1,0 +1,51 @@
+---
+- name: Ensure SSH config file exists
+  stat:
+    path: /etc/ssh/sshd_config
+  register: sshd_config_stat
+
+- name: Backup existing sshd_config
+  copy:
+    src: /etc/ssh/sshd_config
+    dest: /etc/ssh/sshd_config.bak
+    owner: root
+    group: root
+    mode: '0600'
+  when: sshd_config_stat.stat.exists
+
+- name: Disable SSH root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+    create: yes
+
+- name: Ensure SSH protocol 2 is used
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?Protocol'
+    line: 'Protocol 2'
+    state: present
+
+# For the lab, keep password auth ON, so you don't lock yourself out.
+# If you want to show hardening, you can show the line and explain you
+# would turn it to "no" in production.
+- name: Ensure password authentication is allowed (lab)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication yes'
+    state: present
+
+- name: Restrict SSH to specific users (optional)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?AllowUsers'
+    line: 'AllowUsers student user'
+    state: present
+
+- name: Restart SSH service
+  service:
+    name: ssh
+    state: restarted

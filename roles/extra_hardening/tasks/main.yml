@@ -1,0 +1,73 @@
+---
+### FAIL2BAN ###
+- name: Install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+
+- name: Configure fail2ban jail
+  copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+      [sshd]
+      enabled = true
+      port = ssh
+      logpath = /var/log/auth.log
+      maxretry = 5
+      bantime = 600
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Restart fail2ban
+  service:
+    name: fail2ban
+    state: restarted
+    enabled: yes
+
+
+### PASSWORD POLICY ###
+- name: Configure login.defs password policy
+  lineinfile:
+    path: /etc/login.defs
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^PASS_MAX_DAYS', line: 'PASS_MAX_DAYS   90' }
+    - { regexp: '^PASS_MIN_DAYS', line: 'PASS_MIN_DAYS   1' }
+    - { regexp: '^PASS_WARN_AGE', line: 'PASS_WARN_AGE   7' }
+
+- name: Enforce password complexity (PAM)
+  lineinfile:
+    path: /etc/pam.d/common-password
+    regexp: 'pam_pwquality\.so'
+    line: 'password requisite pam_pwquality.so retry=3 minlen=10 difok=3'
+
+
+### SECURITY BANNERS ###
+- name: Add MOTD banner
+  copy:
+    dest: /etc/motd
+    content: |
+      Authorized access only.
+      All activity is monitored and logged.
+
+- name: Add SSH banner
+  copy:
+    dest: /etc/issue.net
+    content: |
+      WARNING: Unauthorized access is prohibited.
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable SSH banner
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^Banner'
+    line: 'Banner /etc/issue.net'
+
+- name: Restart SSH
+  service:
+    name: ssh
+    state: restarted

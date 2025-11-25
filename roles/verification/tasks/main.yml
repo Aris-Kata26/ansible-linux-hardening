@@ -1,0 +1,31 @@
+---
+- name: Show UFW status
+  command: ufw status
+  register: ufw_status
+- debug:
+    var: ufw_status.stdout_lines
+
+- name: Show SSH PermitRootLogin
+  command: grep PermitRootLogin /etc/ssh/sshd_config
+  register: ssh_root
+- debug:
+    var: ssh_root.stdout_lines
+
+- name: Show fail2ban status
+  command: systemctl status fail2ban
+  register: f2b
+  ignore_errors: yes
+- debug:
+    var: f2b.stdout_lines
+
+- name: Show last failed logins
+  command: lastb | head -5
+  register: last_failed
+- debug:
+    var: last_failed.stdout_lines
+
+- name: Show password policy (login.defs)
+  command: grep -E 'PASS_MAX_DAYS|PASS_MIN_DAYS|PASS_WARN_AGE' /etc/login.defs
+  register: pwd_policy
+- debug:
+    var: pwd_policy.stdout_lines

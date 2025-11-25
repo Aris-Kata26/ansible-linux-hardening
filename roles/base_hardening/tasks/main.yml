@@ -1,0 +1,61 @@
+---
+- name: Ensure APT cache is up to date
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Upgrade all packages to the latest version
+  apt:
+    upgrade: dist
+    autoremove: yes
+    autoclean: yes
+
+- name: Install base security packages
+  apt:
+    name:
+      - ufw
+      - unattended-upgrades
+    state: present
+
+- name: Enable unattended upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+  notify: restart unattended-upgrades
+
+- name: Set UFW default policies (deny incoming, allow outgoing)
+  ufw:
+    state: enabled
+    direction: incoming
+    policy: deny
+
+- name: Ensure UFW allows outgoing connections
+  ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Allow SSH through UFW
+  ufw:
+    rule: allow
+    port: "{{ ssh_port }}"
+    proto: tcp
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+
+# Optional: make sure 'student' is in sudo group
+- name: Ensure 'student' user is present
+  user:
+    name: ubuntu
+    groups: sudo
+    append: yes
+    state: present
+
+# Handlers
+- name: restart unattended-upgrades
+  service:
+    name: unattended-upgrades
+    state: restarted

@@ -1,0 +1,14 @@
+---
+- name: hardening for Ubuntu student servers
+  hosts: linux_servers
+  become: true
+
+  vars:
+    ssh_port: 22
+
+  roles:
+    - base_hardening
+    - ssh_hardening
+    - extra_hardening
+    - verification
+    - lynis

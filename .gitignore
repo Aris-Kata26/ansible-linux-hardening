@@ -1,0 +1,7 @@
+# Never upload real passwords or temp files
+inventory.ini
+*.bak
+*.pyc
+__pycache__/
+.env
+*.log

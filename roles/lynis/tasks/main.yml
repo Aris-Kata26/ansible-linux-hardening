@@ -1,0 +1,6 @@
+---
+- name: Install Lynis
+  apt:
+    name: lynis
+    state: present
+    update_cache: yes

@@ -1,0 +1,13 @@
+- hosts: linux_servers
+  become: yes
+  vars:
+    sudo_line: "student ALL=(ALL) NOPASSWD: ALL"
+  tasks:
+    - name: Allow student passwordless sudo
+      copy:
+        dest: /etc/sudoers.d/90-student-nopasswd
+        content: "{{ sudo_line }}\n"
+        owner: root
+        group: root
+        mode: '0440'
+        validate: '/usr/sbin/visudo -cf %s'
