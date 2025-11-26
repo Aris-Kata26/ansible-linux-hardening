@@ -52,8 +52,8 @@
     line: 'student ALL=(ALL) NOPASSWD: ALL'
     validate: 'visudo -cf %s'
 
-handlers:
-  - name: restart unattended-upgrades
+- name: restart unattended-upgrades
     service:
       name: unattended-upgrades
       state: restarted
+
