@@ -15,7 +15,29 @@
     name:
       - ufw
       - unattended-upgrades
+      - fail2ban
     state: present
+
+# UFW tasks — ALL changed to community.general.ufw
+- name: Set UFW default deny incoming
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Allow outgoing traffic
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Allow SSH
+  community.general.ufw:
+    rule: allow
+    port: "{{ ssh_port | default(22) }}"
+    proto: tcp
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
 
 - name: Enable unattended upgrades
   copy:
@@ -25,37 +47,24 @@
       APT::Periodic::Unattended-Upgrade "1";
   notify: restart unattended-upgrades
 
-- name: Set UFW default policies (deny incoming, allow outgoing)
-  ufw:
-    state: enabled
-    direction: incoming
-    policy: deny
-
-- name: Ensure UFW allows outgoing connections
-  ufw:
-    direction: outgoing
-    policy: allow
-
-- name: Allow SSH through UFW
-  ufw:
-    rule: allow
-    port: "{{ ssh_port }}"
-    proto: tcp
-
-- name: Enable UFW
-  ufw:
-    state: enabled
-
-# Optional: make sure 'student' is in sudo group
-- name: Ensure 'student' user is present
+# Ensure student can sudo without password (common in labs)
+- name: Ensure student user exists and can sudo
   user:
-    name: ubuntu
+    name: student
     groups: sudo
     append: yes
     state: present
 
-# Handlers
-- name: restart unattended-upgrades
-  service:
-    name: unattended-upgrades
-    state: restarted
+- name: Allow student to sudo without password
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^student'
+    line: 'student ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+
+handlers:
+  - name: restart unattended-upgrades
+    service:
+      name: unattended-upgrades
+      state: restarted
