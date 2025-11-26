@@ -31,10 +31,6 @@
 # --- UFW configuration using simple shell commands ---
 # We avoid the missing 'ufw' module by using the CLI.
 
-- name: Set UFW default allow outgoing
-  ansible.builtin.command: ufw default allow outgoing
-  args:
-    warn: false
  
 - name: Allow SSH through UFW (AWX and controller)
   ansible.builtin.command: ufw allow "{{ ssh_port | default('22') }}/tcp"
@@ -54,4 +50,5 @@
     groups: sudo
     append: yes
     state: present
+
 
