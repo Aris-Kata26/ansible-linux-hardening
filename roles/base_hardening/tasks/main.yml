@@ -1,59 +1,97 @@
 ---
-- name: Update APT cache
-  apt:
-    update_cache: yes
-    cache_valid_time: 3600
 
-- name: Full system upgrade
+- name: Ensure APT cache is up to date
+
   apt:
+
+    update_cache: yes
+
+    cache_valid_time: 3600
+ 
+- name: Upgrade all packages to the latest version
+
+  apt:
+
     upgrade: dist
+
     autoremove: yes
 
-- name: Install security packages
+    autoclean: yes
+ 
+- name: Install base security packages
+
   apt:
+
     name:
+
       - ufw
-      - fail2ban
+
       - unattended-upgrades
+
     state: present
+ 
+- name: Enable unattended upgrades
 
-- name: Allow SSH
-  community.general.ufw:
-    rule: allow
-    port: 22
-    proto: tcp
-
-- name: Deny incoming by default
-  community.general.ufw:
-    direction: incoming
-    policy: deny
-
-- name: Allow outgoing
-  community.general.ufw:
-    direction: outgoing
-    policy: allow
-
-- name: Enable UFW
-  community.general.ufw:
-    state: enabled
-
-- name: Enable unattended-upgrades
   copy:
-    content: |
-      APT::Periodic::Update-Package-Lists "1";
-      APT::Periodic::Unattended-Upgrade "1";
+
     dest: /etc/apt/apt.conf.d/20auto-upgrades
 
-- name: Allow student sudo without password
-  lineinfile:
-    path: /etc/sudoers
-    state: present
-    regexp: '^student'
-    line: 'student ALL=(ALL) NOPASSWD: ALL'
-    validate: 'visudo -cf %s'
+    owner: root
 
-handlers:
-  - name: restart unattended-upgrades
-    service:
-      name: unattended-upgrades
-      state: restarted
+    group: root
+
+    mode: '0644'
+
+    content: |
+
+      APT::Periodic::Update-Package-Lists "1";
+
+      APT::Periodic::Unattended-Upgrade "1";
+
+  notify: restart unattended-upgrades
+ 
+- name: Set UFW default deny incoming policy
+
+  ufw:
+
+    direction: incoming
+
+    policy: deny
+ 
+- name: Ensure UFW allows outgoing connections
+
+  ufw:
+
+    direction: outgoing
+
+    policy: allow
+ 
+- name: Allow SSH through UFW
+
+  ufw:
+
+    rule: allow
+
+    port: "{{ ssh_port | default('22') }}"
+
+    proto: tcp
+ 
+- name: Enable UFW
+
+  ufw:
+
+    state: enabled
+ 
+- name: Ensure 'ubuntu' user is present and in sudo
+
+  user:
+
+    name: ubuntu
+
+    groups: sudo
+
+    append: yes
+
+    state: present
+
+ 
