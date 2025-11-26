@@ -1,5 +1,4 @@
 ---
-# Update and upgrade system
 - name: Update APT cache
   apt:
     update_cache: yes
@@ -10,7 +9,6 @@
     upgrade: dist
     autoremove: yes
 
-# Install required packages
 - name: Install security packages
   apt:
     name:
@@ -19,19 +17,18 @@
       - unattended-upgrades
     state: present
 
-# UFW configuration — using the correct collection name
 - name: Allow SSH
   community.general.ufw:
     rule: allow
     port: 22
     proto: tcp
 
-- name: Deny all incoming by default
+- name: Deny incoming by default
   community.general.ufw:
     direction: incoming
     policy: deny
 
-- name: Allow all outgoing
+- name: Allow outgoing
   community.general.ufw:
     direction: outgoing
     policy: allow
@@ -40,7 +37,6 @@
   community.general.ufw:
     state: enabled
 
-# Enable automatic upgrades
 - name: Enable unattended-upgrades
   copy:
     content: |
@@ -48,8 +44,7 @@
       APT::Periodic::Unattended-Upgrade "1";
     dest: /etc/apt/apt.conf.d/20auto-upgrades
 
-# Allow student to sudo without password
-- name: Add student to sudoers with nopasswd
+- name: Allow student sudo without password
   lineinfile:
     path: /etc/sudoers
     state: present
@@ -57,7 +52,6 @@
     line: 'student ALL=(ALL) NOPASSWD: ALL'
     validate: 'visudo -cf %s'
 
-# Handlers (this was missing — this is why you got the error)
 handlers:
   - name: restart unattended-upgrades
     service:
