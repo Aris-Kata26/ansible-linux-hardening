@@ -27,10 +27,16 @@
       APT::Periodic::Update-Package-Lists "1";
       APT::Periodic::Unattended-Upgrade "1";
   notify: restart unattended-upgrades
+  
+- name: Set UFW default deny incoming
+  ansible.builtin.command: ufw default deny incoming
+  args:
+    warn: false
  
-# --- UFW configuration using simple shell commands ---
-# We avoid the missing 'ufw' module by using the CLI.
-
+- name: Set UFW default allow outgoing
+  ansible.builtin.command: ufw default allow outgoing
+  args:
+    warn: false
  
 - name: Allow SSH through UFW (AWX and controller)
   ansible.builtin.command: ufw allow "{{ ssh_port | default('22') }}/tcp"
@@ -41,14 +47,10 @@
   ansible.builtin.command: ufw --force enable
   args:
     warn: false
- 
-# --- User setup ---
- 
+
 - name: Ensure 'ubuntu' user is present and in sudo
   ansible.builtin.user:
     name: ubuntu
     groups: sudo
     append: yes
     state: present
-
-
