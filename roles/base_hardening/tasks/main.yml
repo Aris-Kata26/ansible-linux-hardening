@@ -30,12 +30,7 @@
  
 # --- UFW configuration using simple shell commands ---
 # We avoid the missing 'ufw' module by using the CLI.
- 
-- name: Set UFW default deny incoming
-  ansible.builtin.command: ufw default deny incoming
-  args:
-    warn: false
- 
+
 - name: Set UFW default allow outgoing
   ansible.builtin.command: ufw default allow outgoing
   args:
@@ -59,3 +54,4 @@
     groups: sudo
     append: yes
     state: present
+
