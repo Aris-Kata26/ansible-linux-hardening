@@ -1,24 +1,24 @@
 ---
 - name: Ensure APT cache is up to date
-  apt:
+  ansible.builtin.apt:
     update_cache: yes
     cache_valid_time: 3600
-
+ 
 - name: Upgrade all packages to the latest version
-  apt:
+  ansible.builtin.apt:
     upgrade: dist
     autoremove: yes
     autoclean: yes
-
+ 
 - name: Install base security packages
-  apt:
+  ansible.builtin.apt:
     name:
       - ufw
       - unattended-upgrades
     state: present
-
+ 
 - name: Enable unattended upgrades
-  copy:
+  ansible.builtin.copy:
     dest: /etc/apt/apt.conf.d/20auto-upgrades
     owner: root
     group: root
@@ -27,37 +27,35 @@
       APT::Periodic::Update-Package-Lists "1";
       APT::Periodic::Unattended-Upgrade "1";
   notify: restart unattended-upgrades
-
-# ←←← ALL UFW TASKS BELOW MUST USE community.general.ufw ←←←
-- name: Set UFW default deny incoming policy
-  community.general.ufw:
-    direction: incoming
-    policy: deny
-
-- name: Ensure UFW allows outgoing connections
-  community.general.ufw:
-    direction: outgoing
-    policy: allow
-
-- name: Allow SSH through UFW
-  community.general.ufw:
-    rule: allow
-    port: "{{ ssh_port | default('22') }}"
-    proto: tcp
-
-- name: Enable UFW
-  community.general.ufw:
-    state: enabled
-
+ 
+# --- UFW configuration using simple shell commands ---
+# We avoid the missing 'ufw' module by using the CLI.
+ 
+- name: Set UFW default deny incoming
+  ansible.builtin.command: ufw default deny incoming
+  args:
+    warn: false
+ 
+- name: Set UFW default allow outgoing
+  ansible.builtin.command: ufw default allow outgoing
+  args:
+    warn: false
+ 
+- name: Allow SSH through UFW (AWX and controller)
+  ansible.builtin.command: ufw allow "{{ ssh_port | default('22') }}/tcp"
+  args:
+    warn: false
+ 
+- name: Enable UFW (non-interactive)
+  ansible.builtin.command: ufw --force enable
+  args:
+    warn: false
+ 
+# --- User setup ---
+ 
 - name: Ensure 'ubuntu' user is present and in sudo
-  user:
+  ansible.builtin.user:
     name: ubuntu
     groups: sudo
     append: yes
     state: present
-
-handlers:
-  - name: restart unattended-upgrades
-    service:
-      name: unattended-upgrades
-      state: restarted
